@@ -7,7 +7,7 @@ namespace DownloadProjects
         public byte[] Download(string url)
         {
             //    Имитируем бурную деятельность
-            Thread.Sleep(2000);
+            Thread.Sleep(4000);
             return new byte[] { 1, 2, 3, 4 };
         }
     }
