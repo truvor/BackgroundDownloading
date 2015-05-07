@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 
 namespace DownloadProjects
 {
@@ -7,7 +8,7 @@ namespace DownloadProjects
         public byte[] Download(string url)
         {
             //    Имитируем бурную деятельность
-            Thread.Sleep(4000);
+            Thread.Sleep(2000);
             return new byte[] { 1, 2, 3, 4 };
         }
     }

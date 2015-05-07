@@ -8,9 +8,13 @@ namespace DownloadProjects
 {
     public static class DownloadManager
     {
-        //List<Task<byte[]>> _tasks = new List<Task<byte[]>>();
+        private static object _thisLock = new object();
+        private static FileDownloader _fd = new FileDownloader();
 
-        /*public static Task<Task<T>>[] Interleaved<T>(IEnumerable<Task<T>> tasks)
+        /// <summary>
+        /// Возвращает задачи в порядке их выполнения
+        /// </summary>
+        private static Task<Task<T>>[] Interleaved<T>(IEnumerable<Task<T>> tasks)
         {
             var inputTasks = tasks.ToList();
 
@@ -33,52 +37,48 @@ namespace DownloadProjects
                 inputTask.ContinueWith(continuation, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
 
             return results;
-        }*/
+        }
 
         /// <summary>
-        /// Имитирует загрузку
+        /// Имитирует загрузку списка файлов асинхронно
         /// </summary>
-        /*private async static Task<byte[]> DownloadFiles(List<string> fileUrls)
+        public async static Task DownloadFilesAsync(List<string> fileUrls)
         {
             List<Task<byte[]>> tasks = new List<Task<byte[]>>();
 
-            foreach(var fileUrl in fileUrls)
+            foreach (var url in fileUrls)
             {
-                tasks.Add(new Task<byte[]>(_fd.Download(fileUrl)));
+                tasks.Add(Task.Factory.StartNew(() => RunDownload(url)));
+                Console.WriteLine("Файл, расположенный по адресу {0} начал скачиваться",
+                    url);
             }
 
             foreach (var bucket in Interleaved(tasks))
             {
                 var t = await bucket;
-                try { Process(await t); }
-                catch (OperationCanceledException) { }
+                byte[] result = await t;
+
+                Console.WriteLine("Сохранённые байты файла:");
+                foreach (var item in result)
+                {
+                    Console.WriteLine(item);
+                }
             }
-        }*/
-
-        private static FileDownloader _fd = new FileDownloader();
-
+        }
 
         /// <summary>
-        /// Запускает загрузку файла в отдельном рабочем потоке
+        /// Запускает загрузку файла
         /// </summary>
         /// <param name="fileUrl">Адрес скачиваемого файла</param>
-        /*public static void RunDownload(string fileUrl)
+        private static byte[] RunDownload(string fileUrl)
         {
-            Thread t = new Thread(() => DownloadFile(fileUrl));
-            t.Start();
-        }*/
-
-        async public static Task<byte[]> DownloadFile(string fileUrl)
-        {
-            return await Task.Run(() => _fd.Download(fileUrl)).ConfigureAwait(continueOnCapturedContext: false);
-            
-            /*Console.WriteLine("Файл, расположенный по адресу {0} успешно скачан.",
-                fileUrl);
-            Console.WriteLine("Сохранённые байты файла:");
-            foreach (var item in result)
+            lock(_thisLock)
             {
-                Console.WriteLine(item.ToString());
-            }*/
+                var bytes = _fd.Download(fileUrl);
+                Console.WriteLine("Файл, расположенный по адресу {0} успешно скачан.",
+                    fileUrl);
+                return bytes;
+            }
         }
     }
 }
